@@ -1,4 +1,4 @@
-# VexTab 2.0
+# VexTab 3.0
 
 A VexTab Parser for VexFlow.
 Copyright (c) 2012 Mohit Muthanna Cheppudira.
@@ -17,47 +17,35 @@ To see what VexTab can do, take a look at the [list of features](http://my.vexfl
 
 ## Quick Start
 
-Simply include `releases/vextab-div.js` into your HTML document via a script tag. The contents of all `div` elements with the class `vex-tabdiv` are parsed as VexTab and automatically rendered in-place as music notation.
+Simply include `dist/div.prod.js` into your HTML document via a script tag. The contents of all `div` elements with the class `vextab-auto` are parsed as VexTab and automatically rendered in-place as music notation.
 
 ```html
-<div class="vex-tabdiv"
+<div class="vextab-auto"
     width=680 scale=1.0 editor="true"
-    editor_width=680 editor_height=330>options space=20
-    tabstave
-    notation=true
-    key=A time=4/4
+    editor-width=680 editor-height=330>
+    options space=20
+    tabstave notation=true key=A time=4/4
 
     notes :q =|: (5/2.5/3.7/4) :8 7-5h6/3 ^3^ 5h6-7/5 ^3^ :q 7V/4 |
     notes :8 t12p7/4 s5s3/4 :8 3s:16:5-7/5 :h p5/4
     text :w, |#segno, ,|, :hd, , #tr
 
-
     options space=25
 </div>
 ```
-
-VexTab defaults to HTML5 canvas; for SVG define `VEXTAB_USE_SVG` _before_ including `vextab-div.js`. See the `.html` files in `doc/` for examples of `vextab-div` in use.
 
 Some of the available `div` attributes are:
 
 * `editor`: `true`|`false` -- Enable/disable live editor. Default `false`.
 * `scale`: `0.5` -> `3.0` -- Scale factor for rendering. Default `1.0`.
-* `editor_width`, `editor_height`: pixels -- Dimensions of editor.
+* `editor-width`, `editor-height`: pixels -- Dimensions of editor.
 
-You can use the CSS file in `releases/vextab.css` for basic styling of the interface. You can also set the `clear` background color via `div.vex-canvas`. E.g.:
+Note that the provided `dist/div.dev.js` bundle is unminified, and `dist/div.prod.js` is minified. They include bundled versions of zepto, lodash, and VexFlow. You can get access to some of these classes, and the VexTab API (see below) via the `vextab` global.
 
-```css
-div.vex-canvas {
-  background-color: white;
-}
-```
-
-Note that the provided `vextab-div.js` bundle is unminified, and includes all necessary dependencies such as jQuery, lodash, and VexFlow. You can get access to some of these classes, and the VexTab API (see below) via the `VexTabDiv` global.
-
-* `VexTabDiv.Div`: The TabDiv class used to implement the auto-render functionality for `div` elements.
-* `VexTabDiv.VexTab`: The parser. See API below.
-* `VexTabDiv.Artist`: The renderer. See API below.
-* `VexTabDiv.Flow`: The `Vex.Flow` namespace from the VexFlow library.
+* `vextab.Div`: The TabDiv class used to implement the auto-render functionality for `div` elements.
+* `vextab.VexTab`: The parser. See API below.
+* `vextab.Artist`: The renderer. See API below.
+* `vextab.Vex`: The `Vex` namespace from the VexFlow library.
 
 ## VexTab API
 
@@ -67,40 +55,29 @@ If you want to do more interesting things with VexTab, you can use the API direc
 $ npm install vextab
 ```
 
-Basic usage:
+Basic usage [jsfiddle](https://jsfiddle.net/ogL5w6ja/2/)
 
 ```js
-// Load VexTab module.
-vextab = require("vextab");
+import {VexTab, Artist, Vex} from 'vextab';
 
-VexTab = vextab.VexTab;
-Artist = vextab.Artist;
-Renderer = vextab.Vex.Flow.Renderer;
+const Renderer = Vex.Flow.Renderer;
 
-// Create VexFlow Renderer from canvas element with id #boo.
-renderer = new Renderer($('#boo')[0], Renderer.Backends.CANVAS);
-
-// For SVG, you can use the following line (make sure #boo is a div element)
-// renderer = new Renderer($('#boo')[0], Renderer.Backends.SVG);
+// Create VexFlow Renderer from canvas element with id #boo
+const renderer = new Renderer($('#boo')[0], Renderer.Backends.SVG);
 
 // Initialize VexTab artist and parser.
-artist = new Artist(10, 10, 600, {scale: 0.8});
-vextab = new VexTab(artist);
+const artist = new Artist(10, 10, 600, { scale: 0.8 });
+const tab = new VexTab(artist);
 
 try {
-    // Parse VexTab music notation passed in as a string.
-    vextab.parse("tabstave notation=true\n notes :q 4/4\n")
-
-    // Render notation onto canvas.
+    tab.parse('tabstave').val());
     artist.render(renderer);
 } catch (e) {
-    console.log(e);
+    console.error(e);
 }
 ```
 
 See `tests/playground.js` for a working example of the VexTab API in use.
-
-You can also also use the API in standalone mode, i.e., without a loader, by including `releases/vextab-div.js` in a `script` tag. See `tests/vextab-standalone.js` for an example of this.
 
 ## Developers
 
@@ -108,23 +85,40 @@ Clone this repository. Then run the following commands to setup a basic build an
 
 ```
 $ npm install
-$ npm link
-$ npm link vextab
 $ npm start
 ```
 
 If you have the `grunt-cli` NPM package installed, you can manually run the various build steps:
 
+Browse to http://localhost:9005 to run tests.
+
+### Publishing new packages
+
+Update vexflow dependency if necessary.
+
 ```
 $ npm install -g grunt-cli
-$ grunt (lint|build|test|stage|publish)
+$ npm upgrade vexflow
+$ grunt (lint|build|publish)
 ```
 
-Before sending in a pull request, make sure that the tests pass a visual inspection. Open `tests/runtests.html` in your browser and verify that the notation examples at the bottom of the page render correctly. Also open `tests/playground.html` and verify that your new feature/bug fix, etc. works correctly.
+Before sending in a pull request, make sure that the tests pass a visual inspection. Open `http://localhost:9005` in your browser and verify that the notation examples at the bottom of the page render correctly. Also open `http://localhost:9005/playground.html` and verify that your new feature/bug fix, etc. works correctly.
 
 Please add new tests for whatever you're working on. Don't send PRs without tests. Thanks!
 
-## Dependencies
+### Working with a local VexFlow installation
+
+```
+$ git clone vexflow_repo
+$ cd vexflow
+$ npm link
+$ cd ~/git/vextab
+$ npm link vexflow
+```
+
+You may have to run `npm link vexflow` everytime you install or upgrade an npm package.
+
+## Other Dependencies
 
 This rewrite of VexTab has three key dependencies:
 

@@ -3,15 +3,14 @@ VexTab Tests
 Copyright Mohit Cheppudira 2010 <mohit@muthanna.com>
 ###
 
-vextab = require "../src/main.coffee"
+import Vex from 'vexflow';
+import Artist from '../src/artist.coffee';
+import VexTab from '../src/vextab.coffee';
 
-Vex = vextab.Vex
-VexTab = vextab.VexTab
-Artist = vextab.Artist
-
-$ = require "jquery"
-qunit = require "qunitjs"
+qunit = QUnit
 test = qunit.test
+
+console.log(test)
 
 Artist.DEBUG = false;
 VexTab.DEBUG = false;
@@ -75,7 +74,7 @@ class VexTabTests
     # equal(error.code, error_type, error.message)
     assert.equal(true, caught)
 
-  makeParser = -> new VexTab(new Artist(0, 0, 600, {scale: 0.8}))
+  makeParser = -> new VexTab(new Artist(0, 0, 800, {scale: 0.8}))
   makeRenderer = (test_name)->
     test_div = $('<div></div>').addClass("testcanvas")
     test_div.append($('<div></div>').addClass("name").text(test_name))
@@ -93,6 +92,51 @@ class VexTabTests
     assert.notEqual null, tab.parse(code)
     tab.getArtist().render(renderer)
     assert.ok(true, "all pass")
+
+  # ID counter for getRenderedContent.
+  idcounter = 0
+
+  # Render content to a new div, and return the content.
+  # Remove some things that change but aren't relevant (IDs)
+  getRenderedContent = (container, code, cssflex) ->
+
+    idcounter += 1
+    canvasid = 'rendered-' + idcounter
+
+    makeCanvas = ->
+      c = $('<div></div>').css('flex', cssflex).css('font-size', '0.8em')
+      p = $('<p></p>').css('margin-top', '0px')
+      p.append($('<pre></pre>').text(code).css('font-family', 'courier'))
+      c.append(p)
+      canvas = $('<div></div>').addClass("vex-tabdiv").attr('id', canvasid)
+      c.append(canvas)
+      return c
+
+    renderCodeInCanvas = ->
+      tab = new VexTab(new Artist(0, 0, 500, {scale: 0.8}))
+      tab.parse(code)
+      canvas = $('#' + canvasid)
+      renderer = new Vex.Flow.Renderer(canvas[0], Vex.Flow.Renderer.Backends.SVG)
+      renderer.getContext().setBackgroundFillStyle("#eed")
+      tab.getArtist().render(renderer)
+
+    container.append(makeCanvas())
+    renderCodeInCanvas()
+    content = $('#' + canvasid).
+      html().
+      replace(/id=\".*?\"/g, 'id="xxx"')
+    return content
+
+  # Ensure that the rendered content of vex1 and vex2 are equivalent.
+  assertEquivalent = (assert, title, vex1, vex2) ->
+    test_div = $('<div></div>').addClass("testcanvas")
+    test_div.append($('<div></div>').addClass("name").text(title))
+    container = $('<div></div>').css('display', 'flex')
+    test_div.append(container)
+    $("body").append(test_div)
+    oldhtml = getRenderedContent(container, vex1, '0 0 30%')
+    newhtml = getRenderedContent(container, vex2, '1')
+    assert.equal(oldhtml, newhtml, title)
 
   @basic: (assert) ->
     assert.expect 3
@@ -220,13 +264,22 @@ class VexTabTests
     assert.ok true, "all pass"
 
   @bar: (assert) ->
-    assert.expect 5
+    assert.expect 7
     tab = makeParser()
 
     assert.notEqual null, tab.parse("tabstave\n notes |10s11/3")
     assert.notEqual null, tab.parse("tabstave\n notes 10s11h12p10/3|")
     assert.notEqual null, tab.parse("tabstave notation=true key=A\n notes || :w || 5/5 ||| T5/5 | T5V/5")
     catchError(assert, tab, "tabstave\n | notes 10/2s10")
+
+    code = """tabstave notation=true key=E time=12/8
+        notes :w 7/4 | :w 6/5"""
+    assertEquivalent(assert, "Sole notes line ends with bar", code, code + " |")
+
+    code = """tabstave notation=true key=E time=12/8
+        notes :w 7/4 |
+        notes :w 6/5"""
+    assertEquivalent(assert, "Last notes line ends with bar", code, code + " |")
 
     assert.ok true, "all pass"
 
@@ -502,6 +555,7 @@ class VexTabTests
     """
     renderTest assert, "Render Complex", code
 
+
   @tabStems: (assert) ->
     code = """
     options tab-stems=true
@@ -624,4 +678,4 @@ class VexTabTests
     """
     renderTest assert, "Fret Hand Fingering and String Numbers", code
 
-module.exports = VexTabTests
+VexTabTests.Start()

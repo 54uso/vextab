@@ -5,8 +5,8 @@
 # parsed by Vex.Flow.VexTab.
 
 
-Vex = require 'vexflow'
-_ = require 'lodash'
+import Vex from 'vexflow'
+import * as _ from 'lodash'
 
 class Artist
   @DEBUG = false
@@ -214,6 +214,7 @@ class Artist
       if last_note instanceof Vex.Flow.BarNote
         notes.pop()
         stave.setEndBarType(last_note.getType())
+        stave.formatted = true
 
     for stave in @staves
       L "Rendering staves."
@@ -708,11 +709,11 @@ class Artist
     if decorator == "V"
       modifier = new Vex.Flow.Vibrato().setHarsh(true)
     if decorator == "u"
-      modifier = new Vex.Flow.Articulation("a|").setPosition(Vex.Flow.Modifier.Position.BOTTOM)
-      score_modifier = new Vex.Flow.Articulation("a|").setPosition(Vex.Flow.Modifier.Position.BOTTOM)
+      modifier = new Vex.Flow.Articulation("a|").setPosition(Vex.Flow.Modifier.Position.BELOW)
+      score_modifier = new Vex.Flow.Articulation("a|").setPosition(Vex.Flow.Modifier.Position.BELOW)
     if decorator == "d"
-      modifier = new Vex.Flow.Articulation("am").setPosition(Vex.Flow.Modifier.Position.BOTTOM)
-      score_modifier = new Vex.Flow.Articulation("am").setPosition(Vex.Flow.Modifier.Position.BOTTOM)
+      modifier = new Vex.Flow.Articulation("am").setPosition(Vex.Flow.Modifier.Position.BELOW)
+      score_modifier = new Vex.Flow.Articulation("am").setPosition(Vex.Flow.Modifier.Position.BELOW)
 
     _.last(tab_notes).addModifier(modifier, 0) if modifier?
     _.last(score_notes)?.addArticulation(0, score_modifier) if score_modifier?
@@ -1010,4 +1011,4 @@ class Artist
       else
         throw new Vex.RERR("ArtistError", "Invalid command '#{words[0]}' at line #{_l} column #{_c}")
 
-module.exports = Artist
+export default Artist
